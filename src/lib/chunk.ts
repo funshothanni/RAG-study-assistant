@@ -1,10 +1,6 @@
 import { Chunk } from "../types/chunk";
 
-export function chunkDocument(text: string, sourceDoc: string, metadata: Record<string, number | string | boolean>) {
-    // number of words each chunk carries
-    const chunkSize = 300;
-    // number of duplicate words chunk has from previous chunk
-    const overlap = 50;
+export function chunkDocument(text: string, sourceDoc: string, metadata: Record<string, number | string | boolean>, chunkSize: number = 300, overlap: number = 50) {
     //safeguard check to return empty array on bad input
     if (text.trim().length === 0) {
         return [];
@@ -15,7 +11,6 @@ export function chunkDocument(text: string, sourceDoc: string, metadata: Record<
     if (chunkSize <= 0) {
         throw new Error("Chunk size must be greater than 0.");
     }
-    //
     if (overlap >= chunkSize) {
         throw new Error("Overlap must be smaller than chunk size.");
     }
