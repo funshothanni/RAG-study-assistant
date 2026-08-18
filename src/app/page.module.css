@@ -1,0 +1,44 @@
+.container {
+    min-height: 100vh;
+    padding: 60px;
+}
+
+.content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.chat {
+    background-color: black;
+    border: 1px solid #dddddd;
+    border-radius: 12px;
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+}
+
+.messages {
+    flex: 1;
+    padding: 20px;
+}
+
+.form {
+    display: flex;
+    gap: 10px;
+    padding: 20px;
+    border-top: 1px solid #dddddd;
+}
+
+.input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #cccccc;
+    border-radius: 8px;
+}
+
+.button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
