@@ -1,0 +1,93 @@
+.container {
+    min-height: 100vh;
+    padding: 60px;
+}
+
+.content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.chat {
+    background-color: black;
+    border: 1px solid #dddddd;
+    border-radius: 12px;
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+}
+
+.messages {
+    flex: 1;
+    padding: 20px;
+}
+
+.form {
+    display: flex;
+    gap: 10px;
+    padding: 20px;
+    border-top: 1px solid #dddddd;
+}
+
+.input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #cccccc;
+    border-radius: 8px;
+}
+
+.button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.uploadSection {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.fileInput {
+    flex: 1;
+}
+
+.uploadButton {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.uploadedFile {
+    width: 100%;
+    font-size: 14px;
+    margin: 0;
+}
+
+.messages {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 300px;
+    padding: 16px;
+    overflow-y: auto;
+}
+
+.userMessage {
+    align-self: flex-end;
+    max-width: 70%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background-color: #100808;
+}
+
+.assistantMessage {
+    align-self: flex-start;
+    max-width: 70%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background-color: #100808;
+}
