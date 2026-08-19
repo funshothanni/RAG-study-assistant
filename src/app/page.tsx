@@ -3,7 +3,45 @@ import { useState } from "react";
 import styles from "./page.module.css";
 
 export default function Home() {
+    type Message = {
+        role: "user" | "assistant";
+        text: string;
+    };
     const [question, setQuestion] = useState("");
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [file, setFile] = useState<File | null>(null);
+    const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+    function handleSubmit(event: { preventDefault: () => void; }) {
+        event.preventDefault();
+        if(question.trim() === ""){
+            return;
+        }
+        console.log(question);
+        const userMessage: Message = {
+            role: "user",
+            text: question
+        };
+
+        const assistantMessage: Message = {
+            role: "assistant",
+            text: "This is a temporary assistant response."
+        };
+
+        setMessages([
+            ...messages,
+            userMessage,
+            assistantMessage
+        ]);
+        console.log(messages);
+        setQuestion("");
+
+    }
+    function handleFileUpload(){
+      if(!file){
+          return;
+      }
+      setUploadedFile(file);
+    }
     return (
         <main className={styles.container}>
             <div className={styles.content}>
@@ -12,9 +50,23 @@ export default function Home() {
 
                 <div className={styles.chat}>
                     <div className={styles.messages}>
+                        {messages.map((message, index) => (
+                            <div
+                                key={index}
+                                className={
+                                    message.role === "user"
+                                        ? styles.userMessage
+                                        : styles.assistantMessage
+                                }
+                            >
+                                {message.text}
+                            </div>
+                        ))}
+
                     </div>
 
-                    <form className={styles.form}>
+                    <form className={styles.form}
+                    onSubmit={handleSubmit}>
                         <input
                             className={styles.input}
                             type="text"
@@ -30,6 +82,29 @@ export default function Home() {
                             Send
                         </button>
                     </form>
+                </div>
+                <div className={styles.uploadSection}>
+                    <input
+                        className={styles.fileInput}
+                        type="file"
+                        accept= ".pdf"
+                        onChange={(event) => {
+                            if (event.target.files) {
+                                setFile(event.target.files[0]);
+                            }
+                        }}
+                    />
+
+                    <button
+                        className={styles.uploadButton}
+                        type="button"
+                     onClick={handleFileUpload}>
+                        Upload File
+                    </button>
+                    {uploadedFile && (
+                        <p
+                        className={styles.uploadedFile}>Uploaded: {uploadedFile.name}</p>
+                    )}
                 </div>
             </div>
         </main>
