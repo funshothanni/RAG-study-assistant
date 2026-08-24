@@ -24,7 +24,7 @@ export async function embedChunks(chunks: Chunk[]): Promise<EmbeddedChunk[]> {
     //extract all texts from each chunk
     const texts = chunks.map(chunk => chunk.text);
     //if passed an empty chunk list, no need to call API, immediately return
-    if(texts.length === 0) {
+    if (texts.length === 0) {
         return [];
     }
     const response = await openai.embeddings.create({
@@ -38,3 +38,10 @@ export async function embedChunks(chunks: Chunk[]): Promise<EmbeddedChunk[]> {
     });
 }
 
+export async function embedText(text: string): Promise<number[]> {
+    const response = await openai.embeddings.create({
+        model: "text-embedding-3-small",
+        input: text,
+    });
+    return response.data[0].embedding;
+}
