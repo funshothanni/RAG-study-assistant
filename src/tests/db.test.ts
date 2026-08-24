@@ -1,14 +1,15 @@
 import { describe, expect, test, vi } from "vitest";
-import { insertChunks } from "../lib/db";
+import { insertChunks, searchChunks } from "../lib/db";
 import { EmbeddedChunk } from "../types/embeddedChunk";
 
-const { mockFrom, mockInsert, mockSelect } = vi.hoisted(() => {
+const { mockFrom, mockInsert, mockSelect, mockRpc } = vi.hoisted(() => {
     process.env.SUPABASE_URL = "https://fake-project.supabase.co";
     process.env.SUPABASE_SECRET_KEY = "fake-secret-key";
     return {
         mockFrom: vi.fn(),
         mockInsert: vi.fn(),
         mockSelect: vi.fn(),
+        mockRpc: vi.fn(),
     };
 });
 
@@ -16,6 +17,7 @@ vi.mock("@supabase/supabase-js", () => {
     return {
         createClient: vi.fn(() => ({
             from: mockFrom,
+            rpc: mockRpc,
         })),
     };
 });
@@ -86,4 +88,41 @@ describe("insertChunks", () => {
         expect(insertChunks(chunks)).rejects.toThrow(
             "Failed to insert chunks: Database unavailable");
     })
+
+    test("returns matching chunks from Supabase", async () => {
+        const fakeEmbedding = [0.1, 0.2, 0.3];
+
+        const fakeResults = [
+            {
+                id: 1,
+                text: "Vector similarity finds related information.",
+                source_doc: "test.txt",
+                metadata: {course: "TEST"},
+                similarity: 0.8,
+            },
+        ];
+
+        mockRpc.mockResolvedValue({
+            data: fakeResults,
+            error: null,
+        });
+
+        const result = await searchChunks(fakeEmbedding, 0.5, 5);
+        await expect(result).toEqual(fakeResults);
+        expect(mockRpc).toHaveBeenCalledWith("match_note_chunks", {
+            query_embedding: fakeEmbedding,
+            match_threshold: 0.5,
+            match_count: 5,
+        });
+
+    })
+
+    test("throws an error when chunk retrieval fails", async () => {
+        mockRpc.mockResolvedValueOnce({
+            data: null,
+            error: { message: "RPC failed" },
+        });
+
+        expect(searchChunks([0.1, 0.2, 0.3], 0.5, 5)).rejects.toThrow("Failed to retrieve chunks: RPC failed");
+    });
 });

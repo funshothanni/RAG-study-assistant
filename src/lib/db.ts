@@ -34,3 +34,20 @@ export async function insertChunks(chunks: EmbeddedChunk[]){
     }
     return data;
 }
+
+export async function searchChunks(
+    queryEmbedding: number[],
+    matchThreshold: number = 0.5,
+    matchCount: number = 5
+){
+    const {data, error} = await supabase.rpc("match_note_chunks", {
+        query_embedding: queryEmbedding,
+        match_threshold: matchThreshold,
+        match_count: matchCount,
+    });
+
+    if(error){
+        throw new Error(`Failed to retrieve chunks: ${error.message}`);
+    }
+    return data;
+}
