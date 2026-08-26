@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { EmbeddedChunk } from "@/types/embeddedChunk";
+import {SearchResult} from "@/types/searchResult";
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
@@ -39,7 +40,7 @@ export async function searchChunks(
     queryEmbedding: number[],
     matchThreshold: number = 0.5,
     matchCount: number = 5
-){
+): Promise<SearchResult[]> {
     const {data, error} = await supabase.rpc("match_note_chunks", {
         query_embedding: queryEmbedding,
         match_threshold: matchThreshold,
