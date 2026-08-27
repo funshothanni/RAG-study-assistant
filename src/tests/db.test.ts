@@ -85,7 +85,7 @@ describe("insertChunks", () => {
             error: { message: "Database unavailable" },
         });
 
-        expect(insertChunks(chunks)).rejects.toThrow(
+        await expect(insertChunks(chunks)).rejects.toThrow(
             "Failed to insert chunks: Database unavailable");
     })
 
@@ -108,7 +108,7 @@ describe("insertChunks", () => {
         });
 
         const result = await searchChunks(fakeEmbedding, 0.5, 5);
-        await expect(result).toEqual(fakeResults);
+        expect(result).toEqual(fakeResults);
         expect(mockRpc).toHaveBeenCalledWith("match_note_chunks", {
             query_embedding: fakeEmbedding,
             match_threshold: 0.5,
@@ -123,6 +123,6 @@ describe("insertChunks", () => {
             error: { message: "RPC failed" },
         });
 
-        expect(searchChunks([0.1, 0.2, 0.3], 0.5, 5)).rejects.toThrow("Failed to retrieve chunks: RPC failed");
+        await expect(searchChunks([0.1, 0.2, 0.3], 0.5, 5)).rejects.toThrow("Failed to retrieve chunks: RPC failed");
     });
 });
