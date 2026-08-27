@@ -11,30 +11,48 @@ export default function Home() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [file, setFile] = useState<File | null>(null);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-    function handleSubmit(event: { preventDefault: () => void; }) {
+    async function handleSubmit(event: { preventDefault: () => void; }) {
         event.preventDefault();
-        if(question.trim() === ""){
+
+        if (question.trim() === "") {
             return;
         }
-        console.log(question);
-        const userMessage: Message = {
+
+        const currentQuestion = question;
+
+        const newMessage: Message = {
             role: "user",
-            text: question
+            text: currentQuestion
         };
+
+        setMessages((previousMessages) => [
+            ...previousMessages,
+            newMessage
+        ]);
+
+        setQuestion("");
+
+        const response = await fetch("/api/query", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                question: currentQuestion
+            })
+        });
+
+        const data = await response.json();
 
         const assistantMessage: Message = {
             role: "assistant",
-            text: "This is a temporary assistant response."
+            text: data.answer
         };
 
-        setMessages([
-            ...messages,
-            userMessage,
+        setMessages((previousMessages) => [
+            ...previousMessages,
             assistantMessage
         ]);
-        console.log(messages);
-        setQuestion("");
-
     }
     function handleFileUpload(){
       if(!file){
