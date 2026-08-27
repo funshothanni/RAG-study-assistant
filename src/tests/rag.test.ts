@@ -28,7 +28,6 @@ describe("askQuestion", () => {
 
     it("returns an answer using retrieved context", async () => {
         mockEmbedText.mockResolvedValue([0.1, 0.2, 0.3]);
-
        mockSearchChunks.mockResolvedValue([
             {
                 id: 1,
