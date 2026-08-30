@@ -23,16 +23,16 @@ export async function POST(request: Request) {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        const course = formData.get("course");
+        const subject = formData.get("subject");
 
-        if (typeof course !== "string" || course.trim().length === 0) {
+        if (typeof subject !== "string" || subject.trim().length === 0) {
             return NextResponse.json(
-                { error: "Please provide a course." },
+                { error: "Please provide a subject." },
                 { status: 400 }
             );
         }
 
-        const chunkCount = await ingestPdf(buffer, file.name, {course: course.trim()});
+        const chunkCount = await ingestPdf(buffer, file.name, {subject: subject.trim()});
         return NextResponse.json(
             {
                 message: "PDF uploaded successfully.",
