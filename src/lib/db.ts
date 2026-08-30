@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
-import { EmbeddedChunk } from "@/types/embeddedChunk";
+import {createClient} from "@supabase/supabase-js";
+import {EmbeddedChunk} from "@/types/embeddedChunk";
 import {SearchResult} from "@/types/searchResult";
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -11,8 +11,8 @@ if (!supabaseUrl || !supabaseSecretKey) {
 
 const supabase = createClient(supabaseUrl, supabaseSecretKey);
 
-export async function insertChunks(chunks: EmbeddedChunk[]){
-    if(chunks.length === 0){
+export async function insertChunks(chunks: EmbeddedChunk[], documentId: number) {
+    if (chunks.length === 0) {
         return [];
     }
     const rows = chunks.map(chunk => {
@@ -22,6 +22,7 @@ export async function insertChunks(chunks: EmbeddedChunk[]){
             chunk_index: chunk.chunkIndex,
             metadata: chunk.metadata,
             embedding: chunk.embedding,
+            document_id: documentId,
         };
     });
 
@@ -30,25 +31,53 @@ export async function insertChunks(chunks: EmbeddedChunk[]){
         .insert(rows)
         .select();
 
-    if (error){
+    if (error) {
         throw new Error(`Failed to insert chunks: ${error.message}`)
     }
     return data;
 }
 
-export async function searchChunks(
-    queryEmbedding: number[],
-    subject: string,
-    matchCount: number = 5
-): Promise<SearchResult[]> {
+export async function searchChunks(queryEmbedding: number[], subject: string, matchCount: number = 5): Promise<SearchResult[]> {
     const {data, error} = await supabase.rpc("match_note_chunks", {
         query_embedding: queryEmbedding,
         match_subject: subject,
         match_count: matchCount,
     });
 
-    if(error){
+    if (error) {
         throw new Error(`Failed to retrieve chunks: ${error.message}`);
     }
+    return data;
+}
+
+export async function findDocument(subject: string, fileHash: string) {
+    const {data, error} = await supabase
+        .from("documents")
+        .select("id, file_name")
+        .eq("subject", subject)
+        .eq("file_hash", fileHash)
+        .maybeSingle();
+
+    if (error) {
+        throw new Error(`Failed to check document: ${error.message}`);
+    }
+    return data;
+}
+
+export async function createDocument(fileName: string, fileHash: string, subject: string) {
+    const {data, error} = await supabase
+        .from("documents")
+        .insert({
+            file_name: fileName,
+            file_hash: fileHash,
+            subject: subject,
+        })
+        .select("id")
+        .single();
+
+    if (error) {
+        throw new Error(`Failed to create document: ${error.message}`);
+    }
+
     return data;
 }

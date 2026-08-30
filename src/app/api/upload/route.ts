@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ingestPdf } from "../../../lib/ingest";
+import {DuplicateDocumentError} from "../../../lib/errors";
 
 export async function POST(request: Request) {
     try{
@@ -43,6 +44,13 @@ export async function POST(request: Request) {
         );
     }catch(error){
         console.error(error);
+
+        if (error instanceof DuplicateDocumentError) {
+            return NextResponse.json(
+                { error: error.message },
+                { status: 409 }
+            );
+        }
 
         return NextResponse.json(
             { error: "Internal server error" },
