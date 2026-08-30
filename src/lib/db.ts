@@ -81,3 +81,16 @@ export async function createDocument(fileName: string, fileHash: string, subject
 
     return data;
 }
+
+export async function deleteDocument(documentId: number) {
+    const { error } = await supabase
+        .from("documents")
+        .delete()
+        .eq("id", documentId);
+
+    if (error) {
+        throw new Error(
+            `Failed to delete document: ${error.message}`
+        );
+    }
+}

@@ -1,8 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
-import { insertChunks, searchChunks, findDocument, createDocument } from "../lib/db";
+import { insertChunks, searchChunks, findDocument, createDocument, deleteDocument } from "../lib/db";
 import { EmbeddedChunk } from "../types/embeddedChunk";
 
-const { mockFrom, mockInsert, mockSelect, mockRpc, mockEq, mockMaybeSingle, mockSingle } = vi.hoisted(() => {
+const { mockFrom, mockInsert, mockSelect, mockRpc, mockEq, mockMaybeSingle, mockSingle, mockDelete } = vi.hoisted(() => {
     process.env.SUPABASE_URL = "https://fake-project.supabase.co";
     process.env.SUPABASE_SECRET_KEY = "fake-secret-key";
     return {
@@ -13,6 +13,7 @@ const { mockFrom, mockInsert, mockSelect, mockRpc, mockEq, mockMaybeSingle, mock
         mockEq: vi.fn(),
         mockMaybeSingle: vi.fn(),
         mockSingle: vi.fn(),
+        mockDelete: vi.fn(),
     };
 });
 
@@ -36,6 +37,7 @@ mockFrom.mockImplementation((table: string) => {
         return {
             select: mockSelect,
             insert: mockInsert,
+            delete: mockDelete,
         };
     }
 });
@@ -66,6 +68,7 @@ const documentQuery = {
 };
 
 mockEq.mockReturnValue(documentQuery);
+mockDelete.mockReturnValue({eq: mockEq,});
 
 describe("insertChunks", () => {
     test("returns an empty array and does not contact Supabase when given no chunks", async () => {
@@ -224,5 +227,29 @@ describe("createDocument", () => {
         });
 
         await expect(createDocument("lecture.pdf", "abc123", "PSYC")).rejects.toThrow("Failed to create document: Insert failed");
+    });
+});
+
+describe("deleteDocument", () => {
+    test("deletes the document by id", async () => {
+        mockEq.mockResolvedValueOnce({
+            error: null,
+        });
+
+        await deleteDocument(12);
+
+        expect(mockFrom).toHaveBeenCalledWith("documents");
+        expect(mockDelete).toHaveBeenCalled();
+        expect(mockEq).toHaveBeenCalledWith("id", 12);
+    });
+
+    test("throws an error when document deletion fails", async () => {
+        mockEq.mockResolvedValueOnce({
+            error: { message: "Delete failed" },
+        });
+
+        await expect(deleteDocument(12)).rejects.toThrow(
+            "Failed to delete document: Delete failed"
+        );
     });
 });
