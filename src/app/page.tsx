@@ -64,6 +64,12 @@ export default function Home() {
 
         const data = await response.json();
 
+        if (!response.ok) {
+            console.error(data);
+            alert(data.error || "Question failed.");
+            return;
+        }
+
         const assistantMessage: Message = {
             role: "assistant",
             text: data.answer
@@ -110,7 +116,7 @@ export default function Home() {
 
         formData.append("file", file);
 
-        formData.append("course", selectedSubject);
+        formData.append("subject", selectedSubject);
 
         const response = await fetch("/api/upload", {
             method: "POST",
