@@ -7,6 +7,7 @@ const {
     mockInsertChunks,
     mockFindDocument,
     mockCreateDocument,
+    mockDeleteDocument,
 } = vi.hoisted(() => ({
     mockExtractPdfText: vi.fn(),
     mockChunkDocument: vi.fn(),
@@ -14,6 +15,7 @@ const {
     mockInsertChunks: vi.fn(),
     mockFindDocument: vi.fn(),
     mockCreateDocument: vi.fn(),
+    mockDeleteDocument: vi.fn(),
 }));
 
 vi.mock("../lib/extract", () => ({
@@ -32,6 +34,7 @@ vi.mock("../lib/db", () => ({
     insertChunks: mockInsertChunks,
     findDocument: mockFindDocument,
     createDocument: mockCreateDocument,
+    deleteDocument: mockDeleteDocument,
 }));
 
 import { ingestPdf } from "../lib/ingest";
@@ -74,6 +77,7 @@ describe("ingestPdf", () => {
         mockInsertChunks.mockResolvedValue(undefined);
         mockFindDocument.mockResolvedValue(null);
         mockCreateDocument.mockResolvedValue({id: 12,});
+        mockDeleteDocument.mockResolvedValue(undefined);
 
         const buffer = Buffer.from("fake pdf data");
         const sourceDoc = "psychology.pdf";
@@ -85,6 +89,7 @@ describe("ingestPdf", () => {
         expect(mockChunkDocument).toHaveBeenCalledWith("These are my psychology study notes.", sourceDoc, metadata);
         expect(mockEmbedChunks).toHaveBeenCalledWith(chunks);
         expect(mockInsertChunks).toHaveBeenCalledWith(embeddedChunks, 12);
+        expect(mockDeleteDocument).not.toHaveBeenCalled();
     });
 
     it("throws when storing embedded chunks fails", async () => {
@@ -113,9 +118,11 @@ describe("ingestPdf", () => {
         mockFindDocument.mockResolvedValue(null);
         mockCreateDocument.mockResolvedValue({id: 12,});
         mockInsertChunks.mockRejectedValue(new Error("Database unavailable"));
+        mockDeleteDocument.mockResolvedValue(undefined);
 
         const buffer = Buffer.from("fake pdf data");
         await expect(ingestPdf(buffer, "psychology.pdf", { subject: "PSYC" })).rejects.toThrow("Database unavailable");
+        expect(mockDeleteDocument).toHaveBeenCalledWith(12);
     });
 
     it("throws when the document has already been uploaded", async () => {

@@ -1,7 +1,7 @@
 import { extractPdfText } from "./extract";
 import { chunkDocument } from "./chunk";
 import { embedChunks } from "./embed";
-import { insertChunks, createDocument, findDocument } from "./db";
+import { insertChunks, createDocument, findDocument, deleteDocument} from "./db";
 import {hashFile} from "./hash";
 import {DuplicateDocumentError} from "./errors";
 
@@ -21,9 +21,17 @@ export async function ingestPdf( buffer: Buffer, sourceDoc: string, metadata: Re
 
     const document = await createDocument(sourceDoc, fileHash, subject);
 
-    const text = await extractPdfText(buffer);
-    const chunks = chunkDocument(text, sourceDoc, metadata);
-    const embeddedChunks = await embedChunks(chunks);
-    await insertChunks(embeddedChunks, document.id);
-    return embeddedChunks.length;
+    try{
+        const text = await extractPdfText(buffer);
+        const chunks = chunkDocument(text, sourceDoc, metadata);
+        const embeddedChunks = await embedChunks(chunks);
+
+        await insertChunks(embeddedChunks, document.id);
+        return embeddedChunks.length;
+    } catch (error){
+        await deleteDocument(document.id);
+        throw error;
+    }
+
+
 }
