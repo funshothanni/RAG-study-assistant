@@ -26,7 +26,7 @@ describe("POST /api/upload", () => {
         const formData = new FormData();
 
         formData.append("file", file);
-        formData.append("course", "PSYC");
+        formData.append("subject", "PSYC");
 
         const request = new Request(
             "http://localhost:3000/api/upload",
@@ -47,13 +47,13 @@ describe("POST /api/upload", () => {
         expect(mockIngestPdf).toHaveBeenCalledWith(
             expect.any(Buffer),
             "psychology.pdf",
-            { course: "PSYC" }
+            { subject: "PSYC" }
         );
     });
 
     it("returns 400 when no file is provided", async () => {
         const formData = new FormData();
-        formData.append("course", "PSYC");
+        formData.append("subject", "PSYC");
 
         const request = new Request(
             "http://localhost:3000/api/upload",
@@ -84,7 +84,7 @@ describe("POST /api/upload", () => {
 
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("course", "PSYC");
+        formData.append("subject", "PSYC");
 
         const request = new Request(
             "http://localhost:3000/api/upload",
@@ -106,7 +106,7 @@ describe("POST /api/upload", () => {
         expect(mockIngestPdf).not.toHaveBeenCalled();
     });
 
-    it("returns 400 when no course is provided", async () => {
+    it("returns 400 when no subject is provided", async () => {
         const file = new File(
             ["fake pdf contents"],
             "psychology.pdf",
@@ -130,7 +130,7 @@ describe("POST /api/upload", () => {
         expect(response.status).toBe(400);
 
         expect(body).toEqual({
-            error: "Please provide a course.",
+            error: "Please provide a subject.",
         });
 
         expect(mockIngestPdf).not.toHaveBeenCalled();
@@ -149,7 +149,7 @@ describe("POST /api/upload", () => {
 
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("course", "PSYC");
+        formData.append("subject", "PSYC");
 
         const request = new Request(
             "http://localhost:3000/api/upload",
@@ -169,5 +169,36 @@ describe("POST /api/upload", () => {
         });
 
         expect(mockIngestPdf).toHaveBeenCalled();
+    });
+
+    it("returns 400 when subject is blank", async () => {
+        const file = new File(
+            ["fake pdf contents"],
+            "psychology.pdf",
+            { type: "application/pdf" }
+        );
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("subject", "   ");
+
+        const request = new Request(
+            "http://localhost:3000/api/upload",
+            {
+                method: "POST",
+                body: formData,
+            }
+        );
+
+        const response = await POST(request);
+        const body = await response.json();
+
+        expect(response.status).toBe(400);
+
+        expect(body).toEqual({
+            error: "Please provide a subject.",
+        });
+
+        expect(mockIngestPdf).not.toHaveBeenCalled();
     });
 });

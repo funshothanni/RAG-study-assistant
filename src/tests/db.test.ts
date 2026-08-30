@@ -91,6 +91,7 @@ describe("insertChunks", () => {
 
     test("returns matching chunks from Supabase", async () => {
         const fakeEmbedding = [0.1, 0.2, 0.3];
+        const fakeSubject = "COMP";
 
         const fakeResults = [
             {
@@ -107,11 +108,11 @@ describe("insertChunks", () => {
             error: null,
         });
 
-        const result = await searchChunks(fakeEmbedding, 0.5, 5);
+        const result = await searchChunks(fakeEmbedding, fakeSubject, 5);
         expect(result).toEqual(fakeResults);
         expect(mockRpc).toHaveBeenCalledWith("match_note_chunks", {
             query_embedding: fakeEmbedding,
-            match_threshold: 0.5,
+            match_subject: fakeSubject,
             match_count: 5,
         });
 
@@ -123,6 +124,6 @@ describe("insertChunks", () => {
             error: { message: "RPC failed" },
         });
 
-        await expect(searchChunks([0.1, 0.2, 0.3], 0.5, 5)).rejects.toThrow("Failed to retrieve chunks: RPC failed");
+        await expect(searchChunks([0.1, 0.2, 0.3], "MATH", 5)).rejects.toThrow("Failed to retrieve chunks: RPC failed");
     });
 });
