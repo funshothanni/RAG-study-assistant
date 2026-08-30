@@ -110,6 +110,6 @@ describe("ingestPdf", () => {
         );
 
         const buffer = Buffer.from("fake pdf data");
-        expect(ingestPdf(buffer, "psychology.pdf", { course: "PSYC" })).rejects.toThrow("Database unavailable");
+        await expect(ingestPdf(buffer, "psychology.pdf", { course: "PSYC" })).rejects.toThrow("Database unavailable");
     });
 });

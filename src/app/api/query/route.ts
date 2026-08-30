@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { askQuestion } from "@/lib/rag";
+import { askQuestion } from "../../../lib/rag";
 
 export async function POST(request: Request) {
     try {
@@ -8,8 +8,24 @@ export async function POST(request: Request) {
         const body = await request.json();
 
         const question = body.question;
+        const subject = body.subject;
 
-        const answer = await askQuestion(question);
+
+
+        if (typeof question !== "string" || question.trim().length === 0) {
+            return NextResponse.json(
+                { error: "Please provide a question." },
+                { status: 400 }
+            );
+        }
+        if (typeof subject !== "string" || subject.trim().length === 0) {
+            return NextResponse.json(
+                { error: "Please provide a subject." },
+                { status: 400 }
+            );
+        }
+
+        const answer = await askQuestion(question.trim(), subject.trim());
 
         return NextResponse.json({ answer });
     } catch (error) {

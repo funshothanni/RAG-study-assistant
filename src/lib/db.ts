@@ -38,12 +38,12 @@ export async function insertChunks(chunks: EmbeddedChunk[]){
 
 export async function searchChunks(
     queryEmbedding: number[],
-    matchThreshold: number = 0.5,
+    subject: string,
     matchCount: number = 5
 ): Promise<SearchResult[]> {
     const {data, error} = await supabase.rpc("match_note_chunks", {
         query_embedding: queryEmbedding,
-        match_threshold: matchThreshold,
+        match_subject: subject,
         match_count: matchCount,
     });
 
