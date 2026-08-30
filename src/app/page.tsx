@@ -1,7 +1,7 @@
 "use client";
-import { Inter } from "next/font/google";
-import { useState } from "react";
+import {Inter} from "next/font/google";
 import styles from "./page.module.css";
+import {useEffect, useState} from "react";
 
 const inter = Inter({
     subsets: ["latin"]
@@ -19,6 +19,28 @@ export default function Home() {
 
     const [subjects, setSubjects] = useState<string[]>([]);
     const [selectedSubject, setSelectedSubject] = useState("");
+
+    useEffect(() => {
+        async function loadSubjects() {
+            try {
+                const response = await fetch("/api/subjects");
+                const data = await response.json();
+                if (!response.ok) {
+                    console.error(data);
+                    return;
+                }
+
+                setSubjects(data.subjects);
+                const savedSubject = localStorage.getItem("selectedSubject");
+                if (savedSubject && data.subjects.includes(savedSubject)) {
+                    setSelectedSubject(savedSubject);
+                }
+            } catch (error) {
+                console.error("Failed to load subjects:", error);
+            }
+        }
+        loadSubjects();
+    }, []);
 
     const [showAddSubject, setShowAddSubject] = useState(false);
     const [newSubject, setNewSubject] = useState("");
@@ -159,8 +181,11 @@ export default function Home() {
                     <select
                         className={styles.select}
                         value={selectedSubject}
-                        onChange={(event) =>
-                            setSelectedSubject(event.target.value)
+                        onChange={(event) => {
+                            const subject = event.target.value;
+                            setSelectedSubject(subject);
+                            localStorage.setItem("selectedSubject", subject);
+                        }
                         }
                     >
                         <option value="">

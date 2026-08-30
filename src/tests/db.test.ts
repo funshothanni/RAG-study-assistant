@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { insertChunks, searchChunks, findDocument, createDocument, deleteDocument } from "../lib/db";
+import { insertChunks, searchChunks, findDocument, createDocument, deleteDocument, getSubjects} from "../lib/db";
 import { EmbeddedChunk } from "../types/embeddedChunk";
 
 const { mockFrom, mockInsert, mockSelect, mockRpc, mockEq, mockMaybeSingle, mockSingle, mockDelete } = vi.hoisted(() => {
@@ -54,6 +54,17 @@ mockSelect.mockImplementation((columns?: string) => {
         return {
             single: mockSingle,
         };
+    }
+
+    if (columns === "subject") {
+        return Promise.resolve({
+            data: [
+                { subject: "PSYC" },
+                { subject: "COMP" },
+                { subject: "PSYC" },
+            ],
+            error: null,
+        });
     }
 
     return Promise.resolve({
@@ -250,6 +261,27 @@ describe("deleteDocument", () => {
 
         await expect(deleteDocument(12)).rejects.toThrow(
             "Failed to delete document: Delete failed"
+        );
+    });
+});
+
+describe("getSubjects", () => {
+    test("returns unique subjects from uploaded documents", async () => {
+        const result = await getSubjects();
+
+        expect(mockFrom).toHaveBeenCalledWith("documents");
+        expect(mockSelect).toHaveBeenCalledWith("subject");
+        expect(result).toEqual(["PSYC", "COMP"]);
+    });
+
+    test("throws an error when retrieving subjects fails", async () => {
+        mockSelect.mockResolvedValueOnce({
+            data: null,
+            error: { message: "Database unavailable" },
+        });
+
+        await expect(getSubjects()).rejects.toThrow(
+            "Failed to retrieve subjects: Database unavailable"
         );
     });
 });

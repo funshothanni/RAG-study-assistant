@@ -94,3 +94,17 @@ export async function deleteDocument(documentId: number) {
         );
     }
 }
+
+export async function getSubjects(): Promise<string[]> {
+    const { data, error } = await supabase
+    .from("documents")
+    .select("subject");
+
+    if (error){
+        throw new Error(`Failed to retrieve subjects: ${error.message}`);
+    }
+
+    return [...new Set(
+        data.map(row => row.subject)
+    )];
+}
