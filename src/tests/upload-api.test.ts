@@ -9,6 +9,7 @@ vi.mock("../lib/ingest", () => ({
 }));
 
 import { POST } from "../app/api/upload/route";
+import {DuplicateDocumentError} from "../lib/errors";
 
 describe("POST /api/upload", () => {
     beforeEach(() => {
@@ -67,11 +68,7 @@ describe("POST /api/upload", () => {
         const body = await response.json();
 
         expect(response.status).toBe(400);
-
-        expect(body).toEqual({
-            error: "Please upload a file.",
-        });
-
+        expect(body).toEqual({error: "Please upload a file.",});
         expect(mockIngestPdf).not.toHaveBeenCalled();
     });
 
@@ -98,11 +95,7 @@ describe("POST /api/upload", () => {
         const body = await response.json();
 
         expect(response.status).toBe(400);
-
-        expect(body).toEqual({
-            error: "Only PDF files are supported.",
-        });
-
+        expect(body).toEqual({error: "Only PDF files are supported.",});
         expect(mockIngestPdf).not.toHaveBeenCalled();
     });
 
@@ -128,11 +121,7 @@ describe("POST /api/upload", () => {
         const body = await response.json();
 
         expect(response.status).toBe(400);
-
-        expect(body).toEqual({
-            error: "Please provide a subject.",
-        });
-
+        expect(body).toEqual({error: "Please provide a subject.",});
         expect(mockIngestPdf).not.toHaveBeenCalled();
     });
 
@@ -163,11 +152,7 @@ describe("POST /api/upload", () => {
         const body = await response.json();
 
         expect(response.status).toBe(500);
-
-        expect(body).toEqual({
-            error: "Internal server error",
-        });
-
+        expect(body).toEqual({error: "Internal server error",});
         expect(mockIngestPdf).toHaveBeenCalled();
     });
 
@@ -194,11 +179,33 @@ describe("POST /api/upload", () => {
         const body = await response.json();
 
         expect(response.status).toBe(400);
-
-        expect(body).toEqual({
-            error: "Please provide a subject.",
-        });
-
+        expect(body).toEqual({error: "Please provide a subject.",});
         expect(mockIngestPdf).not.toHaveBeenCalled();
+    });
+
+    it("returns 409 when the PDF has already been uploaded", async () => {
+        mockIngestPdf.mockRejectedValueOnce(
+            new DuplicateDocumentError("psychology.pdf")
+        );
+
+        const formData = new FormData();
+        const file = new File(["fake pdf"], "psychology.pdf", { type: "application/pdf" });
+
+        formData.append("file", file);
+        formData.append("subject", "PSYC");
+
+        const request = new Request(
+            "http://localhost/api/upload",
+            {
+                method: "POST",
+                body: formData,
+            }
+        );
+
+        const response = await POST(request);
+        const body = await response.json();
+
+        expect(response.status).toBe(409);
+        expect(body).toEqual({error: "Document 'psychology.pdf' has already been uploaded",});
     });
 });

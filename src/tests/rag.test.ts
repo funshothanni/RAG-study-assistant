@@ -56,7 +56,7 @@ describe("askQuestion", () => {
 
         expect(answer).toBe("Vector similarity compares text embeddings to find related information.");
         expect(mockEmbedText).toHaveBeenCalledWith(question);
-        expect(mockSearchChunks).toHaveBeenCalledWith([0.1, 0.2, 0.3], subject, 0.5, 5);
+        expect(mockSearchChunks).toHaveBeenCalledWith([0.1, 0.2, 0.3], subject, 5);
         expect(mockGenerateAnswer).toHaveBeenCalledWith(question, "Vector similarity compares numerical representations of text.\n\n" + "RAG uses similarity search to retrieve relevant information.");
     })
 })

@@ -1,8 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
-import { insertChunks, searchChunks } from "../lib/db";
+import { insertChunks, searchChunks, findDocument, createDocument } from "../lib/db";
 import { EmbeddedChunk } from "../types/embeddedChunk";
 
-const { mockFrom, mockInsert, mockSelect, mockRpc } = vi.hoisted(() => {
+const { mockFrom, mockInsert, mockSelect, mockRpc, mockEq, mockMaybeSingle, mockSingle } = vi.hoisted(() => {
     process.env.SUPABASE_URL = "https://fake-project.supabase.co";
     process.env.SUPABASE_SECRET_KEY = "fake-secret-key";
     return {
@@ -10,6 +10,9 @@ const { mockFrom, mockInsert, mockSelect, mockRpc } = vi.hoisted(() => {
         mockInsert: vi.fn(),
         mockSelect: vi.fn(),
         mockRpc: vi.fn(),
+        mockEq: vi.fn(),
+        mockMaybeSingle: vi.fn(),
+        mockSingle: vi.fn(),
     };
 });
 
@@ -22,22 +25,51 @@ vi.mock("@supabase/supabase-js", () => {
     };
 });
 
-mockFrom.mockReturnValue({
-    insert: mockInsert,
-});
+mockFrom.mockImplementation((table: string) => {
+    if (table === "note_chunks") {
+        return {
+            insert: mockInsert,
+        };
+    }
 
+    if (table === "documents") {
+        return {
+            select: mockSelect,
+            insert: mockInsert,
+        };
+    }
+});
 mockInsert.mockReturnValue({
     select: mockSelect,
 });
 
-mockSelect.mockResolvedValue({
-    data: [{ id: 1 }],
-    error: null,
+mockSelect.mockImplementation((columns?: string) => {
+    if (columns === "id, file_name") {
+        return documentQuery;
+    }
+
+    if (columns === "id") {
+        return {
+            single: mockSingle,
+        };
+    }
+
+    return Promise.resolve({
+        data: [{ id: 1 }],
+        error: null,
+    });
 });
+
+const documentQuery = {
+    eq: mockEq,
+    maybeSingle: mockMaybeSingle,
+};
+
+mockEq.mockReturnValue(documentQuery);
 
 describe("insertChunks", () => {
     test("returns an empty array and does not contact Supabase when given no chunks", async () => {
-        const result = await insertChunks([]);
+        const result = await insertChunks([], 12);
 
         expect(result).toEqual([]);
         expect(mockFrom).not.toHaveBeenCalled();
@@ -49,20 +81,21 @@ describe("insertChunks", () => {
                 text: "first chunk",
                 sourceDoc: "test.txt",
                 chunkIndex: 0,
-                metadata: {course: "TEST"},
+                metadata: {subject: "TEST"},
                 embedding: [0.1, 0.2],
             },
         ];
 
-        const result = await insertChunks(chunks);
+        const result = await insertChunks(chunks, 12);
         expect(mockFrom).toHaveBeenCalledWith("note_chunks")
         expect(mockInsert).toHaveBeenCalledWith([
             {
                 text: "first chunk",
                 source_doc: "test.txt",
                 chunk_index: 0,
-                metadata: { course: "TEST" },
+                metadata: { subject: "TEST" },
                 embedding: [0.1, 0.2],
+                document_id: 12,
             }
         ])
         expect(mockSelect).toHaveBeenCalledWith()
@@ -75,7 +108,7 @@ describe("insertChunks", () => {
                 text: "first chunk",
                 sourceDoc: "test.txt",
                 chunkIndex: 0,
-                metadata: {course: "TEST"},
+                metadata: {subject: "TEST"},
                 embedding: [0.1, 0.2],
             },
         ];
@@ -85,8 +118,7 @@ describe("insertChunks", () => {
             error: { message: "Database unavailable" },
         });
 
-        await expect(insertChunks(chunks)).rejects.toThrow(
-            "Failed to insert chunks: Database unavailable");
+        await expect(insertChunks(chunks, 12)).rejects.toThrow("Failed to insert chunks: Database unavailable");
     })
 
     test("returns matching chunks from Supabase", async () => {
@@ -98,7 +130,7 @@ describe("insertChunks", () => {
                 id: 1,
                 text: "Vector similarity finds related information.",
                 source_doc: "test.txt",
-                metadata: {course: "TEST"},
+                metadata: {subject: "TEST"},
                 similarity: 0.8,
             },
         ];
@@ -125,5 +157,72 @@ describe("insertChunks", () => {
         });
 
         await expect(searchChunks([0.1, 0.2, 0.3], "MATH", 5)).rejects.toThrow("Failed to retrieve chunks: RPC failed");
+    });
+});
+
+describe("findDocument", () => {
+    test("returns an existing document", async () => {
+        const fakeDocument = {
+            id: 12,
+            file_name: "lecture.pdf",
+        };
+
+        mockMaybeSingle.mockResolvedValueOnce({
+            data: fakeDocument,
+            error: null,
+        });
+
+        const result = await findDocument("PSYC", "abc123");
+
+        expect(mockFrom).toHaveBeenCalledWith("documents");
+        expect(mockSelect).toHaveBeenCalledWith("id, file_name");
+        expect(mockEq).toHaveBeenCalledWith("subject", "PSYC");
+        expect(mockEq).toHaveBeenCalledWith("file_hash", "abc123");
+        expect(result).toEqual(fakeDocument);
+    });
+
+    test("returns null when the document does not exist", async () => {
+        mockMaybeSingle.mockResolvedValueOnce({
+            data: null,
+            error: null,
+        });
+
+        const result = await findDocument("PSYC", "not-found");
+        expect(result).toBeNull();
+    });
+
+    test("throws an error when checking the document fails", async () => {
+        mockMaybeSingle.mockResolvedValueOnce({
+            data: null,
+            error: { message: "Database unavailable" },
+        });
+
+        await expect(findDocument("PSYC", "abc123")).rejects.toThrow("Failed to check document: Database unavailable");
+    });
+});
+
+
+describe("createDocument", () => {
+    test("creates a document and returns its id", async () => {
+        mockSingle.mockResolvedValueOnce({
+            data: { id: 12 },
+            error: null,
+        });
+
+        const result = await createDocument("lecture.pdf", "abc123", "PSYC");
+
+        expect(mockFrom).toHaveBeenCalledWith("documents");
+        expect(mockInsert).toHaveBeenCalledWith({file_name: "lecture.pdf", file_hash: "abc123", subject: "PSYC",});
+        expect(mockSelect).toHaveBeenCalledWith("id");
+        expect(result).toEqual({ id: 12 });
+    });
+
+    test("throws an error when document creation fails", async () => {
+        mockSingle.mockResolvedValueOnce({
+            data: null,
+            error: { message: "Insert failed" },
+        });
+
+        await expect(createDocument("lecture.pdf", "abc123", "PSYC")).rejects.toThrow("Failed to create document: Insert failed");
     });
 });

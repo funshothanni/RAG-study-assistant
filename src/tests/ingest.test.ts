@@ -4,12 +4,16 @@ const {
     mockExtractPdfText,
     mockChunkDocument,
     mockEmbedChunks,
-    mockInsertChunks
+    mockInsertChunks,
+    mockFindDocument,
+    mockCreateDocument,
 } = vi.hoisted(() => ({
     mockExtractPdfText: vi.fn(),
     mockChunkDocument: vi.fn(),
     mockEmbedChunks: vi.fn(),
     mockInsertChunks: vi.fn(),
+    mockFindDocument: vi.fn(),
+    mockCreateDocument: vi.fn(),
 }));
 
 vi.mock("../lib/extract", () => ({
@@ -26,6 +30,8 @@ vi.mock("../lib/embed", () => ({
 
 vi.mock("../lib/db", () => ({
     insertChunks: mockInsertChunks,
+    findDocument: mockFindDocument,
+    createDocument: mockCreateDocument,
 }));
 
 import { ingestPdf } from "../lib/ingest";
@@ -37,25 +43,22 @@ describe("ingestPdf", () => {
 
     it("extracts, chunks, embeds, and stores a PDF", async () => {
         mockExtractPdfText.mockResolvedValue("These are my psychology study notes.");
-
         const chunks = [
             {
                 text: "These are my psychology",
                 sourceDoc: "psychology.pdf",
                 chunkIndex: 0,
-                metadata: { course: "PSYC" },
+                metadata: { subject: "PSYC" },
             },
             {
                 text: "psychology study notes.",
                 sourceDoc: "psychology.pdf",
                 chunkIndex: 1,
-                metadata: { course: "PSYC" },
+                metadata: { subject: "PSYC" },
             },
         ];
 
         mockChunkDocument.mockReturnValue(chunks);
-
-
         const embeddedChunks = [
             {
                 ...chunks[0],
@@ -69,17 +72,19 @@ describe("ingestPdf", () => {
 
         mockEmbedChunks.mockResolvedValue(embeddedChunks);
         mockInsertChunks.mockResolvedValue(undefined);
+        mockFindDocument.mockResolvedValue(null);
+        mockCreateDocument.mockResolvedValue({id: 12,});
 
         const buffer = Buffer.from("fake pdf data");
         const sourceDoc = "psychology.pdf";
-        const metadata = { course: "PSYC" };
+        const metadata = { subject: "PSYC" };
 
         const result = await ingestPdf(buffer, sourceDoc, metadata);
         expect(result).toBe(2);
         expect(mockExtractPdfText).toHaveBeenCalledWith(buffer);
         expect(mockChunkDocument).toHaveBeenCalledWith("These are my psychology study notes.", sourceDoc, metadata);
         expect(mockEmbedChunks).toHaveBeenCalledWith(chunks);
-        expect(mockInsertChunks).toHaveBeenCalledWith(embeddedChunks);
+        expect(mockInsertChunks).toHaveBeenCalledWith(embeddedChunks, 12);
     });
 
     it("throws when storing embedded chunks fails", async () => {
@@ -92,7 +97,7 @@ describe("ingestPdf", () => {
                 text: "These are my psychology study notes.",
                 sourceDoc: "psychology.pdf",
                 chunkIndex: 0,
-                metadata: { course: "PSYC" },
+                metadata: { subject: "PSYC" },
             },
         ];
 
@@ -105,11 +110,27 @@ describe("ingestPdf", () => {
 
         mockChunkDocument.mockReturnValue(chunks);
         mockEmbedChunks.mockResolvedValue(embeddedChunks);
-        mockInsertChunks.mockRejectedValue(
-            new Error("Database unavailable")
-        );
+        mockFindDocument.mockResolvedValue(null);
+        mockCreateDocument.mockResolvedValue({id: 12,});
+        mockInsertChunks.mockRejectedValue(new Error("Database unavailable"));
 
         const buffer = Buffer.from("fake pdf data");
-        await expect(ingestPdf(buffer, "psychology.pdf", { course: "PSYC" })).rejects.toThrow("Database unavailable");
+        await expect(ingestPdf(buffer, "psychology.pdf", { subject: "PSYC" })).rejects.toThrow("Database unavailable");
+    });
+
+    it("throws when the document has already been uploaded", async () => {
+        mockFindDocument.mockResolvedValueOnce({
+            id: 5,
+            file_name: "psychology.pdf",
+        });
+
+        const buffer = Buffer.from("fake pdf data");
+
+        await expect(ingestPdf(buffer, "psychology.pdf", { subject: "PSYC" })).rejects.toThrow("Document 'psychology.pdf' has already been uploaded");
+
+        expect(mockCreateDocument).not.toHaveBeenCalled();
+        expect(mockExtractPdfText).not.toHaveBeenCalled();
+        expect(mockEmbedChunks).not.toHaveBeenCalled();
+        expect(mockInsertChunks).not.toHaveBeenCalled();
     });
 });
