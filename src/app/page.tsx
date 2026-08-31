@@ -27,6 +27,7 @@ export default function Home() {
     const [newSubject, setNewSubject] = useState("");
 
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         async function loadSubjects() {
@@ -88,6 +89,7 @@ export default function Home() {
         ]);
 
         setQuestion("");
+        setIsLoading(true);
 
         try {
             const response = await fetch("/api/query", {
@@ -130,6 +132,8 @@ export default function Home() {
             );
 
             alert("Question failed.");
+        }finally {
+            setIsLoading(false);
         }
     }
 
@@ -223,7 +227,9 @@ export default function Home() {
 
     return (
         <main
-            className={`${styles.container} ${inter.className}`}
+            className={`${styles.container} ${inter.className} ${
+                sidebarOpen ? styles.sidebarActive : ""
+            }`}
         >
             <header className={styles.header}>
                 <button
@@ -252,12 +258,6 @@ export default function Home() {
             </header>
 
 
-            {sidebarOpen && (
-                <div
-                    className={styles.overlay}
-                    onClick={() => setSidebarOpen(false)}
-                />
-            )}
             <aside
                 className={`${styles.sidebar} ${
                     sidebarOpen
@@ -449,6 +449,13 @@ export default function Home() {
                                     {message.text}
                                 </div>
                             )
+                        )}
+                        {isLoading && (
+                            <div className={styles.typingIndicator}>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
                         )}
                     </div>
 
