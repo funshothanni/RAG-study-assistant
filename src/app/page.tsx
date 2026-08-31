@@ -1,11 +1,13 @@
 "use client";
+
 import {Inter} from "next/font/google";
-import styles from "./page.module.css";
 import {useEffect, useState} from "react";
+import styles from "./page.module.css";
 
 const inter = Inter({
     subsets: ["latin"]
 });
+
 export default function Home() {
     type Message = {
         role: "user" | "assistant";
@@ -14,36 +16,50 @@ export default function Home() {
 
     const [question, setQuestion] = useState("");
     const [messages, setMessages] = useState<Message[]>([]);
+
     const [file, setFile] = useState<File | null>(null);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
     const [subjects, setSubjects] = useState<string[]>([]);
     const [selectedSubject, setSelectedSubject] = useState("");
 
+    const [showAddSubject, setShowAddSubject] = useState(false);
+    const [newSubject, setNewSubject] = useState("");
+
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+
     useEffect(() => {
         async function loadSubjects() {
             try {
                 const response = await fetch("/api/subjects");
                 const data = await response.json();
+
                 if (!response.ok) {
                     console.error(data);
                     return;
                 }
 
                 setSubjects(data.subjects);
-                const savedSubject = localStorage.getItem("selectedSubject");
-                if (savedSubject && data.subjects.includes(savedSubject)) {
+
+                const savedSubject =
+                    localStorage.getItem("selectedSubject");
+
+                if (
+                    savedSubject &&
+                    data.subjects.includes(savedSubject)
+                ) {
                     setSelectedSubject(savedSubject);
                 }
             } catch (error) {
-                console.error("Failed to load subjects:", error);
+                console.error(
+                    "Failed to load subjects:",
+                    error
+                );
             }
         }
+
         loadSubjects();
     }, []);
-
-    const [showAddSubject, setShowAddSubject] = useState(false);
-    const [newSubject, setNewSubject] = useState("");
 
     async function handleSubmit(
         event: React.FormEvent<HTMLFormElement>
@@ -61,53 +77,71 @@ export default function Home() {
 
         const currentQuestion = question;
 
-        const newMessage: Message = {
+        const userMessage: Message = {
             role: "user",
             text: currentQuestion
         };
 
         setMessages((previousMessages) => [
             ...previousMessages,
-            newMessage
+            userMessage
         ]);
 
         setQuestion("");
 
-        const response = await fetch("/api/query", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                question: currentQuestion,
-                subject: selectedSubject
-            })
-        });
+        try {
+            const response = await fetch("/api/query", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    question: currentQuestion,
+                    subject: selectedSubject
+                })
+            });
 
-        const data = await response.json();
+            const data = await response.json();
 
-        if (!response.ok) {
-            console.error(data);
-            alert(data.error || "Question failed.");
-            return;
+            if (!response.ok) {
+                console.error(data);
+
+                alert(
+                    data.error ||
+                    "Question failed."
+                );
+
+                return;
+            }
+
+            const assistantMessage: Message = {
+                role: "assistant",
+                text: data.answer
+            };
+
+            setMessages((previousMessages) => [
+                ...previousMessages,
+                assistantMessage
+            ]);
+        } catch (error) {
+            console.error(
+                "Question failed:",
+                error
+            );
+
+            alert("Question failed.");
         }
-
-        const assistantMessage: Message = {
-            role: "assistant",
-            text: data.answer
-        };
-
-        setMessages((previousMessages) => [
-            ...previousMessages,
-            assistantMessage
-        ]);
     }
 
     function handleAddSubject() {
-        const subject = newSubject.trim().toUpperCase();
+        const subject = newSubject
+            .trim()
+            .toUpperCase();
 
-        if (!/^[A-Z]{4}$/.test(subject)) {
-            alert("Subject must be exactly 4 letters.");
+        if (!/^[A-Z]{3}$/.test(subject) && !/^[A-Z]{4}$/.test(subject)) {
+            alert(
+                "Subject must be 3 or 4 letters."
+            );
             return;
         }
 
@@ -119,6 +153,12 @@ export default function Home() {
         }
 
         setSelectedSubject(subject);
+
+        localStorage.setItem(
+            "selectedSubject",
+            subject
+        );
+
         setNewSubject("");
         setShowAddSubject(false);
     }
@@ -137,42 +177,104 @@ export default function Home() {
         const formData = new FormData();
 
         formData.append("file", file);
+        formData.append(
+            "subject",
+            selectedSubject
+        );
 
-        formData.append("subject", selectedSubject);
+        try {
+            const response = await fetch(
+                "/api/upload",
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
 
-        const response = await fetch("/api/upload", {
-            method: "POST",
-            body: formData
-        });
+            const data = await response.json();
 
-        const data = await response.json();
+            console.log(data);
 
-        console.log(data);
+            if (!response.ok) {
+                console.error(data);
 
-        if (!response.ok) {
-            console.error(data);
-            alert(data.error || "File upload failed.");
-            return;
+                alert(
+                    data.error ||
+                    "File upload failed."
+                );
+
+                return;
+            }
+
+            setUploadedFile(file);
+
+            alert(
+                "File uploaded successfully."
+            );
+        } catch (error) {
+            console.error(
+                "File upload failed:",
+                error
+            );
+
+            alert("File upload failed.");
         }
-
-        setUploadedFile(file);
-
-        alert("File uploaded successfully.");
     }
 
     return (
-        <h1 className={`${styles.title} ${inter.className}`}>
-            <div className={styles.content}>
-                <header className={styles.header}>
-                    <h1 className={styles.title}>
-                        <span className={styles.ragText}>RAG</span>
-                        <span> Study Assistant</span>
-                    </h1>
+        <main
+            className={`${styles.container} ${inter.className}`}
+        >
+            <header className={styles.header}>
+                <button
+                    className={styles.menuButton}
+                    type="button"
+                    onClick={() =>
+                        setSidebarOpen(true)
+                    }
+                >
+                    ☰
+                </button>
 
-                    <p className={styles.subtitle}>
-                        Your course notes, ready to answer.
-                    </p>
-                </header>
+                <h1 className={styles.title}>
+                    <span className={styles.ragText}>
+                        RAG
+                    </span>
+
+                    <span>
+                        {" "}Study Assistant
+                    </span>
+                </h1>
+
+                <p className={styles.subtitle}>
+                    Your course notes, summarized into key points.
+                </p>
+            </header>
+
+
+            {sidebarOpen && (
+                <div
+                    className={styles.overlay}
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+            <aside
+                className={`${styles.sidebar} ${
+                    sidebarOpen
+                        ? styles.sidebarOpen
+                        : ""
+                }`}
+            >
+                <button
+                    className={styles.closeSidebarButton}
+                    type="button"
+                    onClick={() =>
+                        setSidebarOpen(false)
+                    }
+                >
+                    ×
+                </button>
+
                 <div className={styles.subjectSection}>
                     <label className={styles.label}>
                         Subject
@@ -182,11 +284,18 @@ export default function Home() {
                         className={styles.select}
                         value={selectedSubject}
                         onChange={(event) => {
-                            const subject = event.target.value;
-                            setSelectedSubject(subject);
-                            localStorage.setItem("selectedSubject", subject);
-                        }
-                        }
+                            const subject =
+                                event.target.value;
+
+                            setSelectedSubject(
+                                subject
+                            );
+
+                            localStorage.setItem(
+                                "selectedSubject",
+                                subject
+                            );
+                        }}
                     >
                         <option value="">
                             Select subject
@@ -203,7 +312,9 @@ export default function Home() {
                     </select>
 
                     <button
-                        className={styles.addSubjectButton}
+                        className={
+                            styles.addSubjectButton
+                        }
                         type="button"
                         onClick={() =>
                             setShowAddSubject(
@@ -211,28 +322,39 @@ export default function Home() {
                             )
                         }
                     >
-                        Add Subject
+                         Add Subject
                     </button>
 
                     {showAddSubject && (
-                        <div className={styles.addSubjectBox}>
+                        <div
+                            className={
+                                styles.addSubjectBox
+                            }
+                        >
                             <input
-                                className={styles.subjectInput}
+                                className={
+                                    styles.subjectInput
+                                }
                                 type="text"
                                 placeholder="e.g. COMP"
                                 maxLength={4}
                                 value={newSubject}
                                 onChange={(event) =>
                                     setNewSubject(
-                                        event.target.value.toUpperCase()
+                                        event.target.value
+                                            .toUpperCase()
                                     )
                                 }
                             />
 
                             <button
-                                className={styles.saveSubjectButton}
+                                className={
+                                    styles.saveSubjectButton
+                                }
                                 type="button"
-                                onClick={handleAddSubject}
+                                onClick={
+                                    handleAddSubject
+                                }
                             >
                                 Save Subject
                             </button>
@@ -248,18 +370,28 @@ export default function Home() {
                     <div className={styles.filePicker}>
                         <label
                             htmlFor="pdfFile"
-                            className={styles.chooseFileButton}
+                            className={
+                                styles.chooseFileButton
+                            }
                         >
                             Choose File
                         </label>
 
-                        <span className={styles.fileName}>
-        {file ? file.name : "No file selected"}
-    </span>
+                        <span
+                            className={
+                                styles.fileName
+                            }
+                        >
+                            {file
+                                ? file.name
+                                : "No file selected"}
+                        </span>
 
                         <input
                             id="pdfFile"
-                            className={styles.hiddenFileInput}
+                            className={
+                                styles.hiddenFileInput
+                            }
                             type="file"
                             accept=".pdf"
                             onChange={(event) => {
@@ -267,41 +399,57 @@ export default function Home() {
                                     event.target.files &&
                                     event.target.files.length > 0
                                 ) {
-                                    setFile(event.target.files[0]);
+                                    setFile(
+                                        event.target.files[0]
+                                    );
                                 }
                             }}
                         />
                     </div>
 
                     <button
-                        className={styles.uploadButton}
+                        className={
+                            styles.uploadButton
+                        }
                         type="button"
-                        onClick={handleFileUpload}
+                        onClick={
+                            handleFileUpload
+                        }
                     >
                         Upload File
                     </button>
 
                     {uploadedFile && (
-                        <p className={styles.uploadedFile}>
-                            Uploaded: {uploadedFile.name}
+                        <p
+                            className={
+                                styles.uploadedFile
+                            }
+                        >
+                            Uploaded:{" "}
+                            {uploadedFile.name}
                         </p>
                     )}
                 </div>
+            </aside>
 
+            <section className={styles.chatArea}>
                 <div className={styles.chat}>
                     <div className={styles.messages}>
-                        {messages.map((message, index) => (
-                            <div
-                                key={index}
-                                className={
-                                    message.role === "user"
-                                        ? styles.userMessage
-                                        : styles.assistantMessage
-                                }
-                            >
-                                {message.text}
-                            </div>
-                        ))}
+                        {messages.map(
+                            (message, index) => (
+                                <div
+                                    key={index}
+                                    className={
+                                        message.role ===
+                                        "user"
+                                            ? styles.userMessage
+                                            : styles.assistantMessage
+                                    }
+                                >
+                                    {message.text}
+                                </div>
+                            )
+                        )}
                     </div>
 
                     <form
@@ -328,7 +476,7 @@ export default function Home() {
                         </button>
                     </form>
                 </div>
-            </div>
-        </h1>
+            </section>
+        </main>
     );
 }

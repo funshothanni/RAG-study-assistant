@@ -1,239 +1,396 @@
 .container {
-    min-height: 100vh;
-    padding: 40px 60px;
-    background: black;
-}
-
-.content {
     width: 100%;
-    max-width: none;
-    margin: 0;
-}
+    height: 100vh;
 
+    box-sizing: border-box;
+
+    background: #000;
+    color: white;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+}
 
 .header {
     width: 100%;
+    flex-shrink: 0;
+
+    position: relative;
+
     text-align: center;
-    margin-bottom: 40px;
+
+    padding: 24px 70px 18px;
+
+    box-sizing: border-box;
 }
 
 .title {
-    font-size: 38px;
+    margin: 0;
+
+    font-size: 34px;
     font-weight: 700;
     letter-spacing: -1px;
-    margin: 0;
 }
 
 .ragText {
-    background: linear-gradient(90deg, #7c3aed, #a855f7);
+    background: linear-gradient(
+            90deg,
+            #7c3aed,
+            #a855f7
+    );
+
     background-clip: text;
     -webkit-background-clip: text;
+
     color: transparent;
 }
 
 .subtitle {
-    margin-top: 8px;
-    margin-bottom: 30px;
+    margin: 8px 0 0;
+
     font-size: 15px;
+
     color: #a1a1aa;
 }
 
-/* SUBJECT + UPLOAD SECTIONS */
 
-.subjectSection,
-.uploadSection {
-    width: 100%;
+.menuButton {
+    position: fixed;
+
+    top: 24px;
+    left: 24px;
+
+    width: 44px;
+    height: 44px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: transparent;
+    color: white;
+
+    font-size: 26px;
+
+    cursor: pointer;
+
+    z-index: 1100;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    transition: background 0.2s ease;
+}
+
+.menuButton:hover {
+    background: #18181b;
+}
+
+.sidebar {
+    position: fixed;
+
+    top: 0;
+    left: 0;
+
+    width: 320px;
+    height: 100vh;
+
     box-sizing: border-box;
+
+    padding: 80px 24px 30px;
+
+    background: #111113;
+
+    border-right: 1px solid #27272a;
+
+    z-index: 1200;
+
+    transform: translateX(-100%);
+
+    transition: transform 0.3s ease;
+
+    overflow-y: auto;
+}
+
+.sidebarOpen {
+    transform: translateX(0);
+}
+
+.closeSidebarButton {
+    position: absolute;
+
+    top: 20px;
+    right: 20px;
+
+    width: 38px;
+    height: 38px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: transparent;
+    color: white;
+
+    font-size: 30px;
+
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.closeSidebarButton:hover {
+    background: #27272a;
+}
+
+.overlay {
+    position: fixed;
+
+    inset: 0;
+
+    background: rgba(0, 0, 0, 0.5);
+
+    z-index: 1150;
+}
+
+.subjectSection {
+    width: 100%;
 
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+
     gap: 12px;
 
-    padding: 24px;
-    margin-bottom: 20px;
-
-    border: 1px solid #2d2d35;
-    border-radius: 14px;
-
-    background: #1f0725;
+    margin-bottom: 36px;
 }
 
 .label {
+    font-size: 14px;
     font-weight: 600;
-    font-size: 15px;
+
+    color: #d4d4d8;
 }
-
-
 
 .select {
-    width: 230px;
-    padding: 10px 12px;
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 12px;
+
+    border: 1px solid #3f3f46;
+    border-radius: 8px;
+
+    background: #18181b;
+    color: white;
 
     font-size: 14px;
 
-    border: 1px solid #ccc;
-    border-radius: 8px;
-
-    background: white;
-    color: black;
+    outline: none;
 }
 
+.select:focus {
+    border-color: #8b5cf6;
+}
 
+.addSubjectButton {
+    width: 100%;
 
-.addSubjectButton,
-.saveSubjectButton,
-.uploadButton {
-    width: fit-content;
+    padding: 12px;
 
-    padding: 10px 16px;
-
-    font-size: 14px;
-    font-weight: 500;
-
-    border: 1px solid #ddd;
+    border: 1px solid #3f3f46;
     border-radius: 8px;
 
-    background: white;
-    color: black;
+    background: #18181b;
+    color: white;
 
     cursor: pointer;
+
+    font-size: 14px;
 }
 
-.addSubjectButton:hover,
-.saveSubjectButton:hover,
-.uploadButton:hover {
-    background: #eeeeee;
+.addSubjectButton:hover {
+    background: #27272a;
 }
-
-
 
 .addSubjectBox {
     display: flex;
     flex-direction: column;
+
     gap: 10px;
-
-    width: 230px;
-    padding: 12px;
-
-    border: 1px solid #333;
-    border-radius: 10px;
-
-    background: #17151a;
 }
 
 .subjectInput {
     width: 100%;
+
     box-sizing: border-box;
 
-    padding: 10px 12px;
+    padding: 12px;
 
-    font-size: 14px;
-
-    border: 1px solid #ccc;
+    border: 1px solid #3f3f46;
     border-radius: 8px;
 
-    background: white;
-    color: black;
+    background: #18181b;
+    color: white;
+
+    outline: none;
 }
 
+.subjectInput:focus {
+    border-color: #8b5cf6;
+}
 
-.filePicker {
-    width: 500px;
-    max-width: 100%;
-    box-sizing: border-box;
+.saveSubjectButton {
+    width: 100%;
 
-    display: flex;
-    align-items: center;
-    gap: 30px;
+    padding: 12px;
 
-    padding: 8px;
-
-    background: white;
-    border: 1px solid #ccc;
+    border: none;
     border-radius: 8px;
 
-    color: black;
+    background: #7c3aed;
+    color: white;
+
+    cursor: pointer;
+
+    font-weight: 600;
+}
+
+.saveSubjectButton:hover {
+    background: #6d28d9;
+}
+
+.uploadSection {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+}
+
+.filePicker {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 10px;
 }
 
 .chooseFileButton {
-    padding: 8px 14px;
+    width: 100%;
 
-    background: #f1f1f1;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+    box-sizing: border-box;
 
-    font-size: 14px;
-    font-weight: 500;
+    padding: 12px;
 
-    color: black;
+    text-align: center;
+
+    border: 1px solid #3f3f46;
+    border-radius: 8px;
+
+    background: #18181b;
+    color: white;
 
     cursor: pointer;
-    white-space: nowrap;
+
+    font-size: 14px;
 }
 
 .chooseFileButton:hover {
-    background: #dddddd;
-}
-
-.fileName {
-    font-size: 14px;
-    color: #555;
+    background: #27272a;
 }
 
 .hiddenFileInput {
     display: none;
 }
 
-.fileUploadArea {
+.fileName {
+    font-size: 12px;
+
+    color: #a1a1aa;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.uploadButton {
     width: 100%;
 
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    padding: 12px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: #7c3aed;
+    color: white;
+
+    cursor: pointer;
+
+    font-weight: 600;
+}
+
+.uploadButton:hover {
+    background: #6d28d9;
 }
 
 .uploadedFile {
     margin: 0;
 
-    font-size: 13px;
-    color: #a1a1aa;
+    font-size: 12px;
+
+    color: #22c55e;
+
+    overflow-wrap: anywhere;
 }
 
+.chatArea {
+    flex: 1;
 
+    min-height: 0;
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 0 40px 30px;
+}
 
 .chat {
     width: 100%;
-    box-sizing: border-box;
+    height: 100%;
 
-    margin-top: 20px;
-    min-height: 300px;
+    box-sizing: border-box;
 
     display: flex;
     flex-direction: column;
 
-    font-size: 14px;
+    overflow: hidden;
 
-    background-color: #1f0725;
+    background: #17171b;
 
-    border: 1px solid #2d2d35;
+    border: 1px solid #303038;
     border-radius: 14px;
 }
 
 .messages {
     flex: 1;
 
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-
-    min-height: 200px;
-    max-height: 400px;
-
-    padding: 20px;
+    min-height: 0;
 
     overflow-y: auto;
+
+    padding: 24px;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 14px;
 }
 
 .userMessage {
@@ -241,71 +398,132 @@
 
     max-width: 70%;
 
-    padding: 10px 14px;
+    padding: 12px 16px;
 
-    font-size: 16px;
+    border-radius: 14px 14px 4px 14px;
+
+    background: #7c3aed;
+
+    color: white;
+
     line-height: 1.5;
 
-    border-radius: 12px;
-
-    background-color: #1d1d23;
+    overflow-wrap: anywhere;
 }
 
 .assistantMessage {
     align-self: flex-start;
 
-    max-width: 70%;
+    max-width: 75%;
 
-    padding: 10px 14px;
+    padding: 12px 16px;
 
-    font-size: 16px;
+    border-radius: 14px 14px 14px 4px;
+
+    background: #27272a;
+
+    color: #f4f4f5;
+
     line-height: 1.5;
 
-    border-radius: 12px;
-
-    background-color: #1d1d23;
+    overflow-wrap: anywhere;
 }
 
-
-
 .form {
+    width: 100%;
+
+    flex-shrink: 0;
+
+    box-sizing: border-box;
+
+    padding: 18px 20px;
+
     display: flex;
+
     gap: 10px;
 
-    padding: 20px;
+    border-top: 1px solid #303038;
 
-    border-top: 1px solid #2d2d35;
+    background: #17171b;
 }
 
 .input {
     flex: 1;
 
-    padding: 12px;
+    min-width: 0;
 
-    font-size: 14px;
+    padding: 14px;
 
-    border: 1px solid #cccccc;
+    border: 1px solid #d4d4d8;
     border-radius: 8px;
 
     background: white;
     color: black;
+
+    font-size: 14px;
+
+    outline: none;
+}
+
+.input:focus {
+    border-color: #8b5cf6;
 }
 
 .button {
-    padding: 12px 18px;
+    padding: 0 22px;
 
-    font-size: 14px;
-    font-weight: 500;
-
-    border: 1px solid #ddd;
+    border: none;
     border-radius: 8px;
 
     background: white;
     color: black;
+
+    font-weight: 600;
 
     cursor: pointer;
 }
 
 .button:hover {
-    background: #eeeeee;
+    background: #e4e4e7;
+}
+
+@media (max-width: 700px) {
+
+    .header {
+        padding: 24px 55px 16px;
+    }
+
+    .title {
+        font-size: 27px;
+    }
+
+    .subtitle {
+        font-size: 13px;
+    }
+
+    .chatArea {
+        padding: 0 12px 12px;
+    }
+
+    .sidebar {
+        width: 85%;
+        max-width: 320px;
+    }
+
+    .messages {
+        padding: 16px;
+    }
+
+    .userMessage,
+    .assistantMessage {
+        max-width: 88%;
+    }
+
+    .form {
+        padding: 12px;
+    }
+
+    .button {
+        padding: 0 16px;
+    }
 }
