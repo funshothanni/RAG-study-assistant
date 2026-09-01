@@ -244,16 +244,16 @@ export default function Home() {
 
                 <h1 className={styles.title}>
                     <span className={styles.ragText}>
-                        RAG
+                        Marginalia
                     </span>
 
                     <span>
-                        {" "}Study Assistant
+                        {" "}
                     </span>
                 </h1>
 
                 <p className={styles.subtitle}>
-                    Your course notes, summarized into key points.
+                    notes that talk back...
                 </p>
             </header>
 
